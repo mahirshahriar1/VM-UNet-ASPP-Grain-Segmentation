@@ -37,7 +37,7 @@ def continuous_dice_loss(output, target):
 
     return cDL.mean()
 
-##  Better to use dice_weight > ce_weight
+##  Better to use dice_weight > ce_weight , {0.8,0.2}/{0.9,0.1}
 def combined_dice_ce_loss(output, target, dice_weight=0.5, ce_weight=0.5):
     ce_loss = F.binary_cross_entropy(output, target)
     dice_loss = continuous_dice_loss(output, target)

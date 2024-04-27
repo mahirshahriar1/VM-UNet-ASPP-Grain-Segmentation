@@ -16,7 +16,7 @@
 - `SAM_LORA (15 epoch 20 image)`: SAM LoRA model trained for 15 epochs on 20 images. **Dice Score - (90.1%)**
 - `SAM_LORA (15 epoch 408 image)`: SAM LoRA model trained for 15 epochs on 408 images. **Dice Score - (90.9%)**
 
-### U-Net Variants and UCTransNet
+### U-Net Variants UCTransNet DeepLabv3+
 - `Ensemble_(spittted)`: Containing SMP models combinations. **Dice Score - (90%)**
 - `Unet_att`: U-Net model with attention mechanism. **Dice Score - (89.5%)**
 - `UCTransnet`: Contains the UCTransNet model with combined_dice_ce_loss. **Dice Score - (90.1%)**

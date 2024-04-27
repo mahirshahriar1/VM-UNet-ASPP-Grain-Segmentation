@@ -1,4 +1,4 @@
-# Repository Title
+# Project Demo 2
 
 ## Papers We Worked With
 - [Grain and Grain Boundary Segmentation using Machine Learning with Real and Generated Datasets](https://arxiv.org/pdf/1906.11031)

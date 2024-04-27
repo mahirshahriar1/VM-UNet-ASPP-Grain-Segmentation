@@ -22,6 +22,7 @@
 - `UCTransnet`: Contains the UCTransNet model with combined_dice_ce_loss. **Dice Score - (90.1%)**
 - `UCTransnet_1_`: Contains the UCTransNet model with custom DiceLoss. **Dice Score - (91.05%)**
 - `Unet++_resnet152_cDCloss`: U-Net++ model with ResNet-152 backbone and with combined_dice_ce_loss. **Dice Score - (90.6%)**
+- `DeeplabV3_cDC`: DeeplabV3+ model with different encoders **Dice Score - (89.66%)**
 
 ### Unet_Base Model
 - `Unet_Base_Model`: Base U-Net model. **Dice Score - (90.66%)**

@@ -1,5 +1,12 @@
 # Repository Title
 
+## Papers We Worked With
+- [Grain and Grain Boundary Segmentation using Machine Learning with Real and Generated Datasets](https://arxiv.org/pdf/1906.11031)
+- [Continuous Dice Coefficient: a Method for Evaluating Probabilistic Segmentations](https://arxiv.org/pdf/1906.11031)
+- [Segment Anything](https://arxiv.org/pdf/2304.02643)
+- [CONVOLUTION MEETS LORA: PARAMETER EFFICIENT FINETUNING FOR SEGMENT ANYTHING MODEL](https://arxiv.org/pdf/2401.17868)
+- [Customized Segment Anything Model for Medical Image Segmentation](https://arxiv.org/pdf/2304.13785)
+
 ## Folder Structure
 
 ### SAM

@@ -20,4 +20,4 @@
 - `Unet_Base_Model`: Base U-Net model. **Dice Score - (90.66%)**
 - `Unet_Base_Model (Trained on 20 image)`: Base U-Net model trained on 20 images. **Dice Score - (89.04%)**
 
-![Dice Scores for Various Models](/Project Demo 2 (GG)/Graph.png)
+![Dice Scores for Various Models](/Images/Graph.jpg)

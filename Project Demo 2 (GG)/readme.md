@@ -10,7 +10,7 @@
 ## Folder Structure
 
 ### SAM
-- `fine_tune_SAM_grains`: Contains the fine-tuned SAM model for grains. **Dice Score - (87.9%)**
+- `fine_tune_SAM_grains`: Contains the fine-tuned SAM model for grains. **Dice Score - (88.4%)**
 
 ### SAM LoRA
 - `SAM_LORA (15 epoch 20 image)`: SAM LoRA model trained for 15 epochs on 20 images. **Dice Score - (90.1%)**

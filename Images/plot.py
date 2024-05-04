@@ -3,6 +3,9 @@ import matplotlib.pyplot as plt
 
 # Reversed data for plotting
 model_names = [
+    "R2AttU-Net",
+    "VM-UNET",
+    "VM-UNET-V2",
     "DeepLabV3Plus (Encoder - resnet152)",
     "Ensemble Segmentation Models (Unet++ with pretrained encoders)",
     "Unet++ resnet152 cDCloss", 
@@ -17,6 +20,9 @@ model_names = [
 ]
 
 dice_scores = [
+    90.2,
+    91.5,
+    90.5,
     89.66,
     90, 
     90.6, 

@@ -39,4 +39,4 @@
 - `Unet_Base_Model (Trained on 20 image)`: Base U-Net model trained on 20 images. **Dice Score - (89.04%)**
 - `R2AttU`: R2AttU_Net_with_Sigmoid
 
-![Dice Scores for Various Models](/Images/Graph.jpg)
+![Dice Scores for Various Models](/Images/Demo2.jpg)

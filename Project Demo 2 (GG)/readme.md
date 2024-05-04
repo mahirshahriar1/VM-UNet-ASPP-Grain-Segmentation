@@ -23,7 +23,7 @@
 - `SAM_LORA (15 epoch 408 image)`: SAM LoRA model trained for 15 epochs on 408 images. **Dice Score - (90.9%)**
 
 ### Vision Mamba UNet
-- `VM_UNet_Grain_Segmentation`: Vision Mamba UNet - **Dice Score - (91.78%)**
+- `VM_UNet_Grain_Segmentation`: Vision Mamba UNet - **Dice Score - (91.82%)**
 - `VM-UNetV2 Grain Segmentation`: Vision Mamba UNet V2 **Dice Score - (90.5%)**
 
 ### U-Net Variants UCTransNet DeepLabv3+

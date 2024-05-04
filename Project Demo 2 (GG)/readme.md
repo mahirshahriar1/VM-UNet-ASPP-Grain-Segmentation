@@ -23,8 +23,8 @@
 - `SAM_LORA (15 epoch 408 image)`: SAM LoRA model trained for 15 epochs on 408 images. **Dice Score - (90.9%)**
 
 ### Vision Mamba UNet
-- `VM_UNet_Grain_Segmentation`: Vision Mamba UNet
-- `VM-UNetV2 Grain Segmentation`: Vision Mamba UNet V2
+- `VM_UNet_Grain_Segmentation`: Vision Mamba UNet - **Dice Score - (91.78%)**
+- `VM-UNetV2 Grain Segmentation`: Vision Mamba UNet V2 **Dice Score - (90.5%)**
 
 ### U-Net Variants UCTransNet DeepLabv3+
 - `Ensemble_(spittted)`: Containing SMP models combinations. **Dice Score - (90%)**
@@ -33,10 +33,10 @@
 - `UCTransnet_1_`: Contains the UCTransNet model with custom DiceLoss. **Dice Score - (91.05%)**
 - `Unet++_resnet152_cDCloss`: U-Net++ model with ResNet-152 backbone and with combined_dice_ce_loss. **Dice Score - (90.6%)**
 - `DeeplabV3_cDC`: DeeplabV3+ model with different encoders **Dice Score - (89.66%)**
+- `R2AttU`: R2AttU_Net_with_Sigmoid **Dice Score - (90.2%)**
 
 ### Unet_Base Model
 - `Unet_Base_Model`: Base U-Net model. **Dice Score - (90.66%)**
 - `Unet_Base_Model (Trained on 20 image)`: Base U-Net model trained on 20 images. **Dice Score - (89.04%)**
-- `R2AttU`: R2AttU_Net_with_Sigmoid
 
 ![Dice Scores for Various Models](/Images/Demo2.jpg)

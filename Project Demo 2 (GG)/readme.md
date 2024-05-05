@@ -9,7 +9,6 @@
 - [UCTransNet: Rethinking the Skip Connections in U-Net from a Channel-wise Perspective with Transformer](https://arxiv.org/pdf/2109.04335)
 - [VM-UNET-V2 Rethinking Vision Mamba UNet for Medical Image Segmentation](https://arxiv.org/pdf/2403.09157)
 - [VM-UNet: Vision Mamba UNet for Medical Image Segmentation](https://arxiv.org/pdf/2402.02491)
-- [UCTransNet: Rethinking the Skip Connections in U-Net from a Channel-wise Perspective with Transformer](https://arxiv.org/pdf/2109.04335)
 - [Medical Image Segmentation Review: The success of U-Net](https://arxiv.org/pdf/2211.14830)
 
 

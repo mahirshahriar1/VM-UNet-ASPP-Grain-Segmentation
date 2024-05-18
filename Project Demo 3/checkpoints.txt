@@ -1,0 +1,13 @@
+VMUnet with monai DiceCELoss     - VM_Unet_TransformationApplied_91.7    91.37
+VmUnet with   bceLoss            - VmUnetBceLoss                         91.93
+VMUnet (perceptual+sobel+bce)    - VMUnet_custom_loss_1                  91.83
+-------------------------------------------------------------------------------
+VmUnet v2 monai DiceCELoss       -                                       90.5
+VmUnet v2 bceLoss                -                                       91.09
+-------------------------------------------------------------------------------
+VmUnet v3 bceLoss                - bceLoss                               91.58
+VMUnet v3 with monai DiceCELoss  - VmUnetV2-edge+dual_att (1)            91.45
+VmUnet v3 with custom loss (edge+dicece) - www                           91.53
+
+
+

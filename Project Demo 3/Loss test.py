@@ -1,51 +1,94 @@
 import torch
 import torch.nn as nn
-import torch.fft as fft
 import torch.nn.functional as F
+from torchvision import models
 
-class FourierEdgeLoss(nn.Module):
-    def __init__(self):
-        super(FourierEdgeLoss, self).__init__()
+class PerceptualLoss(nn.Module):
+    def __init__(self, layers=['conv1_2', 'conv2_2', 'conv3_3', 'conv4_3'], weights=None):
+        super(PerceptualLoss, self).__init__()
+        vgg = models.vgg16(pretrained=True).features
+        self.layers = layers
+        self.weights = weights if weights is not None else [1.0 / len(layers)] * len(layers)
+        self.vgg_slices = nn.ModuleList()
+        self.mean = torch.tensor([0.485, 0.456, 0.406]).view(1, 3, 1, 1)
+        self.std = torch.tensor([0.229, 0.224, 0.225]).view(1, 3, 1, 1)
+
+        slice_layers = {
+            'conv1_2': 4,
+            'conv2_2': 9,
+            'conv3_3': 16,
+            'conv4_3': 23,
+        }
+
+        for layer_name in layers:
+            slice_idx = slice_layers[layer_name]
+            self.vgg_slices.append(vgg[:slice_idx + 1])
+
+        for param in self.parameters():
+            param.requires_grad = False
 
     def forward(self, pred, target):
-        # Fourier transform to frequency domain
-        pred_freq = fft.fftn(pred, dim=(-2, -1))
-        target_freq = fft.fftn(target, dim=(-2, -1))
+        if pred.size(1) == 1:  # If input is single-channel, convert to 3-channel
+            pred = pred.repeat(1, 3, 1, 1)
+            target = target.repeat(1, 3, 1, 1)
 
-        # Apply high-pass filter (enhance high frequencies which represent edges)
-        high_pass_filter = self._high_pass_filter(pred.shape[-2], pred.shape[-1])
-        pred_filtered = pred_freq * high_pass_filter
-        target_filtered = target_freq * high_pass_filter
+        device = pred.device
+        self.mean = self.mean.to(device)
+        self.std = self.std.to(device)
 
-        # Inverse Fourier transform to spatial domain
-        pred_edges = fft.ifftn(pred_filtered, dim=(-2, -1)).abs()
-        target_edges = fft.ifftn(target_filtered, dim=(-2, -1)).abs()
+        pred = (pred - self.mean) / self.std
+        target = (target - self.mean) / self.std
 
-        # Compute binary cross-entropy loss between edges
-        edge_loss = F.mse_loss(pred_edges, target_edges)
+        loss = 0.0
+        for slice_net, weight in zip(self.vgg_slices, self.weights):
+            slice_net = slice_net.to(device)
+            pred_features = slice_net(pred)
+            target_features = slice_net(target)
+            loss += weight * F.mse_loss(pred_features, target_features)
+
+        return loss
+
+class SobelEdgeLoss(nn.Module):
+    def __init__(self):
+        super(SobelEdgeLoss, self).__init__()
+        sobel_x = torch.tensor([[1, 0, -1], [2, 0, -2], [1, 0, -1]], dtype=torch.float32).unsqueeze(0).unsqueeze(0)
+        sobel_y = torch.tensor([[1, 2, 1], [0, 0, 0], [-1, -2, -1]], dtype=torch.float32).unsqueeze(0).unsqueeze(0)
+        self.register_buffer('sobel_x', sobel_x)
+        self.register_buffer('sobel_y', sobel_y)
+        self.bce_loss = nn.BCELoss()
+
+    def forward(self, pred, target):
+        device = pred.device
+        sobel_x = self.sobel_x.to(device)
+        sobel_y = self.sobel_y.to(device)
+
+        pred_edges_x = F.conv2d(pred, sobel_x, padding=1)
+        pred_edges_y = F.conv2d(pred, sobel_y, padding=1)
+        pred_edges = torch.sqrt(pred_edges_x ** 2 + pred_edges_y ** 2 + 1e-7)
+
+        target_edges_x = F.conv2d(target, sobel_x, padding=1)
+        target_edges_y = F.conv2d(target, sobel_y, padding=1)
+        target_edges = torch.sqrt(target_edges_x ** 2 + target_edges_y ** 2 + 1e-7)
+
+        pred_edges = torch.sigmoid(pred_edges)
+        target_edges = torch.sigmoid(target_edges)
+
+        edge_loss = self.bce_loss(pred_edges, target_edges)
 
         return edge_loss
 
-    def _high_pass_filter(self, height, width):
-        x = torch.linspace(-0.5, 0.5, steps=width).unsqueeze(0).repeat(height, 1)
-        y = torch.linspace(-0.5, 0.5, steps=height).unsqueeze(1).repeat(1, width)
-        radius = torch.sqrt(x**2 + y**2)
-        filter = 1 - torch.exp(-radius**2 / (2 * (0.1 ** 2)))
-        return filter.unsqueeze(0).unsqueeze(0)  # Add batch and channel dimensions
-
-import monai
-
-class CombinedLoss(monai.losses.DiceCELoss):
-    def __init__(self, lambda_edge=0.5, lambda_fft=0.5, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.sobel_edge_loss = SobelEdgeLoss()
-        self.fourier_edge_loss = FourierEdgeLoss()
+class CombinedLoss(nn.Module):
+    def __init__(self, lambda_edge=0.5):
+        super(CombinedLoss, self).__init__()
+        self.bce_loss = nn.BCELoss()
+        self.edge_loss = SobelEdgeLoss()
+        self.perceptual_loss = PerceptualLoss()
         self.lambda_edge = lambda_edge
-        self.lambda_fft = lambda_fft
 
     def forward(self, input: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
-        total_loss = super().forward(input, target)
-        sobel_edge_loss = self.sobel_edge_loss(input, target)
-        fourier_edge_loss = self.fourier_edge_loss(input, target)
-        combined_loss = total_loss + self.lambda_edge * sobel_edge_loss + self.lambda_fft * fourier_edge_loss
+        bce_loss = self.bce_loss(input, target)
+        edge_loss = self.edge_loss(input, target)
+        perceptual_loss = self.perceptual_loss(input, target)
+        combined_loss = bce_loss + self.lambda_edge * edge_loss + perceptual_loss
         return combined_loss
+criterion = CombinedLoss() 

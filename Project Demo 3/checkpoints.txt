@@ -1,0 +1,16 @@
+VMUnet with monai DiceCELoss     - VM_Unet_TransformationApplied_91.7    91.37
+VmUnet with   bceLoss            - VmUnetBCELoss 20epoch test            91.912
+VMUnet (perceptual+sobel+bce)    - VMUnet_custom_loss_1                  91.83
+VMUnet with EASPP                - VMUnet_ASPP                           91.84
+VMUnet with ASPP                 - VMUnet_EASPP                          91.917
+VMUnet with FPN                  - VMUnet_FPN                            91.49
+-------------------------------------------------------------------------------
+VmUnet v2 monai DiceCELoss       -                                       90.5
+VmUnet v2 bceLoss                -                                       91.09
+-------------------------------------------------------------------------------
+VmUnet v3 bceLoss                - bceLoss                               91.58
+VMUnet v3 with monai DiceCELoss  - VmUnetV2-edge+dual_att (1)            91.45
+VmUnet v3 with custom loss (edge+dicece) - www                           91.53
+
+
+

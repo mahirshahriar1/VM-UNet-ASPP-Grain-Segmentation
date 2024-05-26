@@ -1,0 +1,253 @@
+\documentclass[conference]{IEEEtran}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{float}
+
+\title{Methodology}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+The VM-UNet architecture is designed for segmentation tasks and comprises several key components: Patch Embedding layer, encoder, decoder, Final Projection layer, and skip connections. Unlike previous symmetrical structures, VM-UNet adopts an asymmetric design.
+
+\section{VM-UNet Architecture}
+
+\subsection{Patch Embedding Layer}
+The input image $ x \in \mathbb{R}^{H \times W \times 3} $ is divided into non-overlapping patches of size 4 × 4, mapping the dimensions of the image to $ C $ (default $ C = 96 $). This process results in the embedded image $ x' \in \mathbb{R}^{\frac{H}{4} \times \frac{W}{4} \times C} $. The embedded image $ x' $ is normalized using Layer Normalization before being fed into the encoder for feature extraction.
+
+\subsection{Encoder}
+The encoder consists of four stages, each employing patch merging operations at the end of the first three stages. This reduces the height and width of the input features while increasing the number of channels. The encoder uses [2, 2, 2, 2] VSS blocks across the four stages, with channel counts [C, 2C, 4C, 8C].
+
+\subsection{Decoder}
+The decoder is also organized into four stages. A patch expanding operation is utilized at the beginning of the last three stages to decrease the number of feature channels while increasing the height and width. The decoder employs [2, 2, 2, 1] VSS blocks across its four stages, with channel counts [8C, 4C, 2C, C]. After the decoder, a Final Projection layer is used to restore the feature size to match the segmentation target, achieving a 4-times upsampling via patch expanding, followed by a projection layer to restore the number of channels.
+
+\subsection{Skip Connections}
+Simple addition operations are adopted for skip connections, without introducing additional parameters.
+
+\subsection{VSS Block}
+The VSS block, derived from VMamba, is the core module of VM-UNet. After undergoing Layer Normalization, the input is split into two branches:
+
+\begin{itemize}
+    \item \textbf{First Branch:}
+    \begin{itemize}
+        \item Passes through a linear layer followed by an activation function.
+    \end{itemize}
+    \item \textbf{Second Branch:}
+    \begin{itemize}
+        \item Processes through a linear layer, depthwise separable convolution, and an activation function before being fed into the 2D-Selective-Scan (SS2D) module for further feature extraction.
+        \item The SS2D consists of scan expanding, an S6 block, and scan merging operations. The scan expanding operation unfolds the input image along four different directions into sequences processed by the S6 block for feature extraction, capturing diverse features. The scan merging operation sums and merges these sequences to restore the output image size.
+    \end{itemize}
+\end{itemize}
+
+Subsequently, the features are normalized using Layer Normalization. An element-wise production is performed with the output from the first branch to merge the two pathways, followed by mixing the features using a linear layer. This outcome is combined with a residual connection to form the VSS block’s output.
+
+\section{Enhanced VM-UNet with ASPP}
+
+\subsection{Motivation for ASPP Integration}
+While the original VM-UNet architecture is effective for various segmentation tasks, there are challenges when dealing with objects of varying sizes and shapes, such as grains. To address this, we integrate the Atrous Spatial Pyramid Pooling (ASPP) layer into the VM-UNet architecture. The ASPP layer enhances the model's ability to capture multi-scale features, providing a wider field of view without losing resolution, which is crucial for accurately segmenting objects of different scales.
+
+\subsection{Atrous Spatial Pyramid Pooling (ASPP)}
+
+\subsubsection{Overview}
+The ASPP layer captures multi-scale features by applying atrous (dilated) convolutions at various rates, providing a wider field of view without losing resolution. This is essential for segmenting objects of varying sizes and shapes, such as grains in segmentation tasks.
+
+\subsubsection{Detailed Explanation}
+Given an input feature map $ x $ with dimensions $ H \times W \times C $:
+
+\begin{enumerate}
+    \item \textbf{1x1 Convolution:}
+    The 1x1 convolution aims to reduce the number of channels and introduce non-linearity.
+    \[
+    y_1 = \text{SiLU}(\text{BN}_1(\text{Conv}_{1 \times 1}(x)))
+    \]
+    where:
+    \begin{itemize}
+        \item $ \text{Conv}_{1 \times 1}(x) $: 1x1 convolution on $ x $.
+        \item $ \text{BN}_1 $: Batch Normalization.
+        \item $ \text{SiLU} $: Sigmoid Linear Unit activation function.
+    \end{itemize}
+
+    \item \textbf{Atrous Convolutions:}
+    Atrous convolutions introduce a dilation rate $ r_i $, which allows the convolutional kernel to have a larger field of view without increasing the number of parameters or the size of the kernel.
+
+    The atrous convolution operation can be formally defined as:
+    \[
+    (\text{Conv}_{3 \times 3}(x, r_i))(p) = \sum_{k} w_k \cdot x(p + r_i \cdot k)
+    \]
+    where:
+    \begin{itemize}
+        \item $ p $: Pixel position.
+        \item $ k $: Kernel index.
+        \item $ w_k $: Weights of the convolutional filter.
+        \item $ r_i $: Dilation rate.
+    \end{itemize}
+
+    The dilation rate $ r_i $ determines the spacing between kernel elements, effectively increasing the receptive field of the convolution without increasing the kernel size.
+
+    \[
+    y_i = \text{SiLU}(\text{BN}_i(\text{Conv}_{3 \times 3}(x, r_i)))
+    \]
+    where:
+    \begin{itemize}
+        \item $ \text{Conv}_{3 \times 3}(x, r_i) $: 3x3 convolution with dilation rate $ r_i $.
+        \item $ \text{BN}_i $: Batch Normalization corresponding to rate $ r_i $.
+    \end{itemize}
+
+    \item \textbf{Global Average Pooling:}
+    This operation captures global context by averaging all the spatial information.
+    \[
+    y_{\text{pool}} = \text{UpSample}(\text{Conv}_{1 \times 1}(\text{GlobalAvgPool}(x)))
+    \]
+    where:
+    \begin{itemize}
+        \item $ \text{GlobalAvgPool}(x) $: Computes the global average pooling of $ x $.
+        \item $ \text{Conv}_{1 \times 1} $: 1x1 convolution to reduce the dimension.
+        \item $ \text{UpSample} $: Bilinear interpolation to match the input dimensions.
+    \end{itemize}
+
+    \item \textbf{Concatenation and Final Convolution:}
+    The outputs from the 1x1 convolution, atrous convolutions, and global average pooling are concatenated along the channel dimension:
+    \[
+    y_{\text{concat}} = \text{Concat}(y_1, y_2, \ldots, y_n, y_{\text{pool}})
+    \]
+    where $ n $ is the number of atrous convolutions applied.
+
+    This concatenated feature map is processed by a final 1x1 convolution:
+    \[
+    y_{\text{out}} = \text{SiLU}(\text{BN}_{\text{out}}(\text{Conv}_{1 \times 1, \text{out}}(y_{\text{concat}})))
+    \]
+\end{enumerate}
+
+\subsubsection{Mathematical Proofs}
+\textbf{Receptive Field Calculation:}
+
+For a standard convolutional layer with kernel size \( K \) and dilation rate \( r \), the effective receptive field \( R \) can be calculated as:
+
+\[
+R = K + (K - 1) \cdot (r - 1)
+\]
+
+This equation shows that the receptive field grows linearly with the dilation rate \( r \), allowing the network to capture larger context without increasing the kernel size or the number of parameters significantly.
+
+\textbf{Example Calculation:}
+
+Consider a 3x3 kernel with a dilation rate of 2. The effective receptive field is:
+
+\[
+R = 3 + (3 - 1) \cdot (2 - 1) = 3 + 2 = 5
+\]
+
+This means that the 3x3 dilated convolution with \( r = 2 \) covers a 5x5 area, effectively increasing the receptive field without additional parameters.
+
+\subsubsection{SiLU Activation Function}
+The Sigmoid Linear Unit (SiLU) activation function, also known as the Swish activation function, is defined as follows:
+
+\[
+\text{SiLU}(x) = x \cdot \sigma(x)
+\]
+
+where \( \sigma(x) \) is the sigmoid function:
+
+\[
+\sigma(x) = \frac{1}{1 + e^{-x}}
+\]
+
+The SiLU activation function has several advantages:
+\begin{itemize}
+    \item \textbf{Smoothness:} SiLU is a smooth and differentiable activation function, which facilitates better gradient flow during backpropagation.
+    \item \textbf{Non-Saturation:} Unlike ReLU, SiLU does not suffer from the dying ReLU problem where neurons become inactive and only output zero. This makes it more robust in deeper networks.
+    \item \textbf{Empirical Performance:} Studies have shown that SiLU often outperforms other activation functions, particularly in deep networks, by providing a balance between linear and non-linear behaviors.
+\end{itemize}
+
+These properties make SiLU an effective choice for complex pattern recognition tasks, such as those involved in segmentation models like VM-UNet.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.45\textwidth]{aspp_diagram.png}
+% \caption{Diagram of the Atrous Spatial Pyramid Pooling (ASPP) process.}
+\label{fig:aspp_diagram}
+\end{figure}
+
+\section{Pseudocode for EnhancedASPP Class}
+\begin{algorithm}[H]
+\caption{Pseudo-code for EnhancedASPP Class}\label{alg:enhanced_aspp}
+\begin{algorithmic}[1]
+\State \textbf{Class} EnhancedASPP:
+\State \hspace{0.5cm} \textbf{Method} \_\_init\_\_(in\_channels, out\_channels, atrous\_rates):
+\State \hspace{1cm} Initialize atrous\_rates
+\State \hspace{1cm} Initialize conv1, bn1
+\State \hspace{1cm} Initialize convs, bns with atrous convolutions
+\State \hspace{1cm} Initialize global\_avg\_pool, conv\_pool
+\State \hspace{1cm} Initialize conv\_out, bn\_out, SiLU
+
+\State \hspace{0.5cm} \textbf{Method} forward($x$):
+\State \hspace{1cm} $x1 \gets$ SiLU(bn1(conv1($x$)))
+\State \hspace{1cm} features $\gets [x1]$
+
+\State \hspace{1cm} \textbf{For each} conv, bn \textbf{in} convs, bns:
+\State \hspace{1.5cm} features.append(SiLU(bn(conv($x$))))
+
+\State \hspace{1cm} $x5 \gets$ global\_avg\_pool($x$)
+\State \hspace{1cm} $x5 \gets$ conv\_pool($x5$)
+\State \hspace{1cm} $x5 \gets$ interpolate($x5$, size=$x$.shape)
+
+\State \hspace{1cm} features.append($x5$)
+
+\State \hspace{1cm} $x \gets$ concatenate(features)
+\State \hspace{1cm} $x \gets$ conv\_out($x$)
+\State \hspace{1cm} $x \gets$ bn\_out($x$)
+\State \hspace{1cm} $x \gets$ SiLU($x$)
+\State \hspace{1cm} \textbf{return} $x$
+\end{algorithmic}
+\end{algorithm}
+
+\section{Pseudocode for ASPP Integration in VSSM Class}
+
+\begin{algorithm}[H]
+\caption{Pseudo-code for ASPP Integration in VSSM Class}\label{alg:vssm}
+\begin{algorithmic}[1]
+\State \textbf{Class} VSSM:
+\State \hspace{0.5cm} \# Initialization and other methods...
+
+\State \hspace{0.5cm} \textbf{Method} forward\_final($x$):
+\State \hspace{1cm} $x \gets$ final\_up($x$)
+\State \hspace{1cm} $x \gets$ permute($x$)
+\State \hspace{1cm} $x \gets$ apply\_ASPP($x$)  \Comment{Apply ASPP here}
+\State \hspace{1cm} $x \gets$ final\_conv($x$)
+\State \hspace{1cm} \textbf{return} $x$
+
+\State \hspace{0.5cm} \textbf{Method} forward($x$):
+\State \hspace{1cm} $x$, skip\_list $\gets$ forward\_features($x$)
+\State \hspace{1cm} $x \gets$ forward\_features\_up($x$, skip\_list)
+\State \hspace{1cm} $x \gets$ forward\_final($x$)
+\State \hspace{1cm} \textbf{return} $x$
+\end{algorithmic}
+\end{algorithm}
+
+\section{Rationale for ASPP in Grain Segmentation}
+The integration of the ASPP layer into VM-UNet provides several benefits:
+
+\begin{itemize}
+    \item \textbf{Multi-Scale Feature Extraction:}
+    Grains can vary significantly in size and shape. The ASPP layer captures multi-scale features by applying atrous convolutions at different rates, ensuring that both small and large grains are effectively segmented.
+
+    \item \textbf{Global and Local Context:}
+    The inclusion of global average pooling within the ASPP layer captures the global context, which is crucial for understanding the overall structure and arrangement of grains.
+
+    \item \textbf{Computational Efficiency:}
+    Atrous convolutions increase the receptive field without a proportional increase in the number of parameters, maintaining computational efficiency while capturing more context.
+
+    \item \textbf{Improved Accuracy and Robustness:}
+    By capturing features at multiple scales and combining global and local context, the ASPP-enhanced VM-UNet model provides improved accuracy and robustness in grain segmentation tasks.
+\end{itemize}
+
+\section{Conclusion}
+The integration of the ASPP layer into the VM-UNet model enhances its ability to segment grains of varying sizes and shapes effectively. By capturing multi-scale features and combining global and local context, the model ensures more accurate and robust segmentation results, making it particularly suitable for grain segmentation applications.
+
+\end{document}

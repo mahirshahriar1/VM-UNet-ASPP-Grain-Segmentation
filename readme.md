@@ -24,6 +24,10 @@ Grain segmentation in materials such as stainless steel is crucial for industria
 
 The core of our approach is the integration of the Atrous Spatial Pyramid Pooling (ASPP) block into the VM-UNet architecture. This enhancement allows the model to capture intricate grain details across multiple scales, improving segmentation accuracy.
 
+<img src="Images/VMUnet.png" alt="VM-UNet ASPP Architecture" width="250" height="350">
+
+![ASPP Block](Images/aspp.png)
+
 
 ## Results
 
@@ -32,6 +36,9 @@ The enhanced VM-UNet with ASPP achieved the highest Dice Score of 91.95%, surpas
 - **VM-UNet ASPP vs. VM-UNet V2 with Edge Aware Attention**: The ASPP-enhanced model outperforms VM-UNet V2 by 0.22%.
 - **Performance Comparison**: Traditional models like U-Net and UCTransNet achieve Dice Scores between 90.0% and 91.05%, while VM-UNet ASPP excels with 91.95%.
 - **Generalist Models**: SAM and SAM LoRA show respectable performance but fall short compared to the specialized VM-UNet ASPP.
+
+![Results](Images/graph.png)
+<img src="Images/ASPP_Results.png" alt="Results" width="250" height="350">
 
 ## Conclusion
 
